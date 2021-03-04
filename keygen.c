@@ -34,13 +34,54 @@ $ keygen 256 > mykey
 */
 
 //includes
-#include <stdio.h>
+#include <stdio.h> 
 #include <stdlib.h>
+#include <string.h>
+#include <time.h> 
+
+int get_random_num(){
+    return rand()%27;
+}
 
 
 int main(int argc, char** argv){
 
-    printf("keygen requested length: %d", atoi(argv[2]));
+    //table of values for random characters
+    int table[27];
+
+    //fill table
+    for(int i=65; i<=90; i++){
+        table[i-65] = i;
+    }
+
+    //put value for space in table(at the last index)
+    table[26] = 32;
+
+    //get the length of the key
+    int key_length = atoi(argv[1]);
+
+    //allocate space for the key
+    char key[key_length+1];
+
+    //clear the key buffer
+    memset(key, '\0', sizeof(key));
+
+    //seed random generator
+    srand(time(NULL));
+
+
+    //fill the buffer with nonsense
+    for (int i=0; i<key_length; i++){
+        int num = get_random_num();
+        key[i] = table[num];
+    }
+
+    //print table of values for the allowed
+    // for(int i=0; i<27; i++){
+    //     printf("table[%d] = %d or char \'%c\'\n", i,table[i], table[i]);
+    // }
+
+    fprintf(stdout, "Key: %s\nKey Length: %ld\n", key, strlen(key));
 
     return EXIT_SUCCESS;
 }

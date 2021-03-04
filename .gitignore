@@ -50,3 +50,10 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+#programs
+keygen
+enc_client
+enc_server
+dec_client
+dec_server
