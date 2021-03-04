@@ -32,3 +32,15 @@ because of the newline):
 $ keygen 256 > mykey
 
 */
+
+//includes
+#include <stdio.h>
+#include <stdlib.h>
+
+
+int main(int argc, char** argv){
+
+    printf("keygen requested length: %d", atoi(argv[2]));
+
+    return EXIT_SUCCESS;
+}
