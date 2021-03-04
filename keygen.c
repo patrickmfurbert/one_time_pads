@@ -81,7 +81,7 @@ int main(int argc, char** argv){
     //     printf("table[%d] = %d or char \'%c\'\n", i,table[i], table[i]);
     // }
 
-    fprintf(stdout, "Key: %s\nKey Length: %ld\n", key, strlen(key));
+    fprintf(stdout, "%s\n", key);
 
     return EXIT_SUCCESS;
 }
