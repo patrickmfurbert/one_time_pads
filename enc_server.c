@@ -5,6 +5,10 @@
 */
 
 
+/* 
+    Encryption Server
+*/
+
 /*
 socket()
 bind()
