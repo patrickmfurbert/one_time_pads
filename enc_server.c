@@ -29,6 +29,8 @@ close()
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 // Set up the address struct for the server socket
 void setupAddressStruct(struct sockaddr_in* address, 
@@ -90,6 +92,9 @@ int main(int argc, char** argv){
 
     /*          LOOP                     */
     while(1){
+
+        printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
+
     ////////////ACCEPT/////////////////////
         connection_socket = accept(listen_socket,
                         (struct sockaddr *)&client_address,
