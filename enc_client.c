@@ -43,12 +43,63 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 }
 
+/*
+    All errors after startup must only be printed to stderr - but the program must still run
+*/
 int main(int argc, char** argv){
 
+    int socket_fd, port_number, characters_written, characters_read;
+    struct sockaddr_in server_address;
+    char buffer[256] = "Hi there! I am the baddest encryption client ever";
+
+
+    /*        Begin Startup             */
     if (argc<4){
-        fprintf(stderr,"USAGE: %s hostname port\n", argv[0]); 
-        exit(0); 
+        fprintf(stderr,"USAGE: %s plaintext_file key_file port\n", argv[0]); 
+        exit(1); 
         }
+
+
+    setupAddressStruct(&server_address, argv[3]);  //setup server address struct
+
+    /////////////////socket////////////////////
+    if((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        fprintf(stderr, "CLIENT: Error on opening socket");
+        exit(1);
+    }
+
+    /*        End Startup               */
+
+    /////////////////connect///////////////////
+    if(connect(socket_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0){
+        fprintf(stderr, "CLIENT: Error on connecting");
+    }
+
+    /////////////////send//////////////////////
+    characters_written = send(socket_fd, buffer, strlen(buffer), 0); //send message to server
+
+    if(characters_written < 0){
+        fprintf(stderr, "CLIENT: Error on writing to socket");
+    }
+
+    if(characters_written < strlen(buffer)){
+        fprintf(stderr, "CLIENT: Warning, not all data written to socket");
+    }
+
+    /////////////////recv//////////////////////
+    memset(buffer, '\0', sizeof(buffer)); // clear the buffer
+
+    characters_read = recv(socket_fd, buffer, sizeof(buffer) -1, 0); //read response from server
+
+    if(characters_read < 0) {
+        fprintf(stderr, "CLIENT: Error on reading from socket");
+    }
+
+    fprintf(stdout, "CLIENT: I recieved this message from the server: \"%s\"\n", buffer);
+
+    /////////////////close/////////////////////
+    close(socket_fd);
+
 
     return EXIT_SUCCESS;
 }
