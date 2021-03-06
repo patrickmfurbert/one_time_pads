@@ -19,8 +19,6 @@ send()
 close()
 */
 
-
-
 //includes
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,8 +27,11 @@ close()
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include <netinet/in.h> //to get localhost
+#include <arpa/inet.h> //to get localhost
+
+//defines
+#define POOL_SIZE 5
 
 // Set up the address struct for the server socket
 void setupAddressStruct(struct sockaddr_in* address, 
@@ -56,7 +57,8 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 int main(int argc, char** argv){
     
-    int connection_socket, characters_read, listen_socket;
+    int connection_socket, characters_read, listen_socket, worker_number = 0;
+    int workers[POOL_SIZE];
     char buffer[256];
     struct sockaddr_in server_address, client_address;
     socklen_t size_of_client_info = sizeof(client_address);
@@ -85,6 +87,29 @@ int main(int argc, char** argv){
     }
 
     /*        End Startup                */
+
+    printf("before creating processes\n");
+
+    ////////////SPAWN WORKERS//////////////
+    for(int i=0;i<POOL_SIZE;i++){
+        if(workers[i] = fork() == 0){
+            break;
+        }
+        if(workers[i] == -1){
+            fprintf(stderr, "SERVER: Error on forking\n");
+        }
+    }
+
+    if(workers[0] == 0){
+        printf("hi, I am a child\n");
+        _exit(0);
+        printf("Do we make it here?\n");
+    }
+    
+    for(int i=0;i<POOL_SIZE;i++){
+        printf("Worker[%d] = %d\n", i, workers[i]);
+    }
+
 
     ////////////LISTEN/////////////////////
     listen(listen_socket, 5);
