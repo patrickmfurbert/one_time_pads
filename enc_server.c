@@ -32,6 +32,8 @@ close()
 
 //defines
 #define POOL_SIZE 5
+pid_t pids[POOL_SIZE];
+int pid_process_counter = 0;
 
 // Set up the address struct for the server socket
 void setupAddressStruct(struct sockaddr_in* address, 
@@ -50,6 +52,10 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 }
 
+void store_pid(pid_t pid){
+    pids[pid_process_counter++] = pid;
+}
+
 
 /*
     All errors after startup must only be printed to stderr - but the program must still run
@@ -58,7 +64,10 @@ void setupAddressStruct(struct sockaddr_in* address,
 int main(int argc, char** argv){
     
     int connection_socket, characters_read, listen_socket, worker_number = 0;
-    int workers[POOL_SIZE];
+    pid_t list_of_workers[POOL_SIZE];
+    pid_t parent_pid = getpid();
+    pid_t pid;
+
     char buffer[256];
     struct sockaddr_in server_address, client_address;
     socklen_t size_of_client_info = sizeof(client_address);
@@ -88,6 +97,9 @@ int main(int argc, char** argv){
 
     /*        End Startup                */
 
+     printf("hi, I am a PARENT********. My PID: %d\n", getpid());
+
+
     ////////////SPAWN WORKERS//////////////
     for(int i=0;i<POOL_SIZE;i++){
 
@@ -97,7 +109,10 @@ int main(int argc, char** argv){
             fprintf(stderr, "SERVER: ERROR on call to pipe()");
         } 
 
-        if(workers[i] = fork() == 0){
+        //fork
+        pid = fork();
+        store_pid(pid);
+        if(pid == 0){
             close(pipeFDs[0]); 
             char my_pid[50];
             memset(my_pid, '\0', sizeof(my_pid));
@@ -105,27 +120,25 @@ int main(int argc, char** argv){
             write(pipeFDs[1], my_pid, strlen(my_pid)); 
             break;
         }
-        if(workers[i] == -1){
+        if(pid == -1){
             fprintf(stderr, "SERVER: Error on forking\n");
         }
         // Parent process will read from the pipe, so close the output file desriptor.
+       // printf("in parent block\n");
         close(pipeFDs[1]);
         char read_buffer[50];
         memset(read_buffer, '\0', sizeof(read_buffer));
         r = read(pipeFDs[0], read_buffer, sizeof(read_buffer) - 1);
-        printf("continue here")
+       list_of_workers[i] = atoi(read_buffer);
 
     }
 
-    if(workers[0] == 0){
-        printf("hi, I am a child. My PID: %d\n", getpid());
+    if(pid == 0){
         _exit(0);
         printf("Do we make it here?\n");
     }
     
-    for(int i=0;i<POOL_SIZE;i++){
-        printf("Worker[%d] = %d\n", i, workers[i]);
-    }
+
 
 
     ////////////LISTEN/////////////////////
@@ -136,6 +149,9 @@ int main(int argc, char** argv){
     while(1){
 
         printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
+
+        printf("Parent: PID: %d\n", getpid());
+
 
     ////////////ACCEPT/////////////////////
         connection_socket = accept(listen_socket,
@@ -149,6 +165,7 @@ int main(int argc, char** argv){
         printf("SERVER: Connected to client running at host %d port %d\n",
                                 ntohs(client_address.sin_addr.s_addr),
                                 ntohs(client_address.sin_port));
+
 
         //clear the buffer
         memset(buffer, '\0', sizeof(buffer));
