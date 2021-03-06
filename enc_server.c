@@ -24,6 +24,7 @@ close()
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wait.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -55,6 +56,7 @@ void setupAddressStruct(struct sockaddr_in* address,
 void store_pid(pid_t pid){
     pids[pid_process_counter++] = pid;
 }
+
 
 
 /*
@@ -97,7 +99,10 @@ int main(int argc, char** argv){
 
     /*        End Startup                */
 
-     printf("hi, I am a PARENT********. My PID: %d\n", getpid());
+    ////////////LISTEN/////////////////////
+    listen(listen_socket, 5);
+
+    //printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
 
 
     ////////////SPAWN WORKERS//////////////
@@ -134,59 +139,55 @@ int main(int argc, char** argv){
     }
 
     if(pid == 0){
-        _exit(0);
-        printf("Do we make it here?\n");
-    }
+       // _exit(0);
+      //  printf("Do we make it here?\n");
     
 
-
-
-    ////////////LISTEN/////////////////////
-    listen(listen_socket, 5);
-
-
     /*          LOOP                     */
-    while(1){
-
-        printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
-
-        printf("Parent: PID: %d\n", getpid());
+        while(1){
 
 
-    ////////////ACCEPT/////////////////////
-        connection_socket = accept(listen_socket,
-                        (struct sockaddr *)&client_address,
-                        &size_of_client_info);
-        if(connection_socket < 0) {
-            fprintf(stderr, "ERROR on accept");
-            exit(1);
+        ////////////ACCEPT/////////////////////
+            connection_socket = accept(listen_socket,
+                            (struct sockaddr *)&client_address,
+                            &size_of_client_info);
+            if(connection_socket < 0) {
+                fprintf(stderr, "ERROR on accept");
+                exit(1);
+            }
+
+            printf("SERVER(PID:%d): Connected to client running at host %d port %d\n",getpid(),
+                                    ntohs(client_address.sin_addr.s_addr),
+                                    ntohs(client_address.sin_port));
+
+
+            //clear the buffer
+            memset(buffer, '\0', sizeof(buffer));
+
+        ////////////RECV///////////////////////
+            characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
+            if(characters_read < 0){
+                fprintf(stderr, "ERROR on reading from the socket");
+                exit(1);
+            }
+            printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+
+            ////////////SEND///////////////////////
+            characters_read = send(connection_socket, 
+                                    "I am the server, and I got your message", 39, 0);
+            if(characters_read < 0){
+                fprintf(stderr, "ERROR on writing to socket");
+                exit(1);
+            }
+        ////////////CLOSE//////////////////////
+            close(connection_socket);
         }
 
-        printf("SERVER: Connected to client running at host %d port %d\n",
-                                ntohs(client_address.sin_addr.s_addr),
-                                ntohs(client_address.sin_port));
+    }
 
-
-        //clear the buffer
-        memset(buffer, '\0', sizeof(buffer));
-
-    ////////////RECV///////////////////////
-        characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
-        if(characters_read < 0){
-            fprintf(stderr, "ERROR on reading from the socket");
-            exit(1);
-        }
-        printf("SERVER: I received this from the client: \"%s\"\n", buffer);
-
-        ////////////SEND///////////////////////
-        characters_read = send(connection_socket, 
-                                "I am the server, and I got your message", 39, 0);
-        if(characters_read < 0){
-            fprintf(stderr, "ERROR on writing to socket");
-            exit(1);
-        }
-    ////////////CLOSE//////////////////////
-        close(connection_socket);
+    //wait for child processes to finish
+    for(int i=0;i<POOL_SIZE;i++){
+        while(waitpid(pids[i], NULL, 0) > 0);
     }
 
     close(listen_socket); //close the listening socket
