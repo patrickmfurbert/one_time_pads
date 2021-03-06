@@ -88,20 +88,37 @@ int main(int argc, char** argv){
 
     /*        End Startup                */
 
-    printf("before creating processes\n");
-
     ////////////SPAWN WORKERS//////////////
     for(int i=0;i<POOL_SIZE;i++){
+
+        int r, pipeFDs[2];
+        // Create the pipe with error check
+        if (pipe(pipeFDs) == -1) {
+            fprintf(stderr, "SERVER: ERROR on call to pipe()");
+        } 
+
         if(workers[i] = fork() == 0){
+            close(pipeFDs[0]); 
+            char my_pid[50];
+            memset(my_pid, '\0', sizeof(my_pid));
+            sprintf(my_pid,"%d", getpid());
+            write(pipeFDs[1], my_pid, strlen(my_pid)); 
             break;
         }
         if(workers[i] == -1){
             fprintf(stderr, "SERVER: Error on forking\n");
         }
+        // Parent process will read from the pipe, so close the output file desriptor.
+        close(pipeFDs[1]);
+        char read_buffer[50];
+        memset(read_buffer, '\0', sizeof(read_buffer));
+        r = read(pipeFDs[0], read_buffer, sizeof(read_buffer) - 1);
+        printf("continue here")
+
     }
 
     if(workers[0] == 0){
-        printf("hi, I am a child\n");
+        printf("hi, I am a child. My PID: %d\n", getpid());
         _exit(0);
         printf("Do we make it here?\n");
     }
