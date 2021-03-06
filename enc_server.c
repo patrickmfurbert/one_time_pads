@@ -182,7 +182,6 @@ int main(int argc, char** argv){
         ////////////CLOSE//////////////////////
             close(connection_socket);
         }
-
     }
 
     //wait for child processes to finish

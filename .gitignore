@@ -57,3 +57,8 @@ enc_client
 enc_server
 dec_client
 dec_server
+reading_files
+reading_files.c
+
+#files
+mykey
