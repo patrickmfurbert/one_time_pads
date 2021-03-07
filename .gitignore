@@ -64,4 +64,5 @@ reading_files.c
 mykey
 mykey_bad
 mykey_short
+mykey_3
 ciphertext
