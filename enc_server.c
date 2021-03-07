@@ -70,6 +70,9 @@ int main(int argc, char** argv){
     pid_t pid;
 
     char buffer[RECV_BUFFER_SIZE];
+    char* payload = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
+    int need_to_realloc = 0;
+    int payload_size = RECV_BUFFER_SIZE + 1;
     struct sockaddr_in server_address, client_address;
     socklen_t size_of_client_info = sizeof(client_address);
 
@@ -166,16 +169,29 @@ int main(int argc, char** argv){
 
         ////////////RECV///////////////////////
             while(strstr(buffer, "!!") == NULL) {
-                memset(buffer, '\0', sizeof(buffer));
+                memset(buffer, '\0', sizeof(buffer)); //clear the buffer
                 characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
                 if(characters_read < 0){
                     fprintf(stderr, "ERROR on reading from the socket");
                     exit(1);
                 }
-                printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+               // printf("SERVER: I received this from the client: \"%s\"\n", buffer);
+
+                //build the payload 
+                if(!need_to_realloc){
+                    need_to_realloc = 1;
+                    strcat(payload, buffer);
+                }else{
+                    payload = (char*)realloc(payload, sizeof(char)*(RECV_BUFFER_SIZE + payload_size));
+                    strcat(payload, buffer);
+                    payload_size += RECV_BUFFER_SIZE;
+                }
             }
 
             printf("SERVER: Finished recv\n");
+            printf("Contents of payload:\n%s\n", payload);
+            printf("Size of Payload = %ld\n", strlen(payload));
+            free(payload);
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
                                     "I am the server, and I got your message", 39, 0);
