@@ -99,7 +99,7 @@ char* parse_message(char* message){
     char* plain_text;
     char* key;
 
-    printf("Message: \n%s\n", message);
+    //printf("Message: \n%s\n", message);
 
     plain_text = strtok_r(message, "@@", &save_pointer);
     key = strtok_r(NULL, "@@", &save_pointer);
