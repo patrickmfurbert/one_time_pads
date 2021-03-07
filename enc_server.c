@@ -224,10 +224,13 @@ int main(int argc, char** argv){
                 exit(1);
             }
 
+            /*
+
             printf("SERVER(PID:%d): Connected to client running at host %d port %d\n",getpid(),
                                     ntohs(client_address.sin_addr.s_addr),
                                     ntohs(client_address.sin_port));
-
+            
+            */
 
             //clear the buffer
             memset(buffer, '\0', sizeof(buffer));
@@ -253,7 +256,7 @@ int main(int argc, char** argv){
                 }
             }
 
-            printf("SERVER: Finished recv\n");
+           // printf("SERVER: Finished recv\n");
             payload[strlen(payload)-2] = '\0';
            // printf("Contents of payload:\n%s\n", payload);
            // printf("Size of Payload = %ld\n", strlen(payload));
