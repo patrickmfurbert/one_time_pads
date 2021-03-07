@@ -58,6 +58,29 @@ void store_pid(pid_t pid){
     pids[pid_process_counter++] = pid;
 }
 
+void encode_message(char* message){
+    char* save_pointer;
+    char* plain_text;
+    char* key;
+
+    plain_text = strtok_r(message, "@@", &save_pointer);
+    key = strtok_r(NULL, "@@", &save_pointer);
+
+    if(plain_text == NULL){
+        fprintf(stderr, "Error getting plaintext");
+    }
+
+    if(key == NULL){
+        fprintf(stderr, "Error getting key");
+    }
+
+    if(plain_text != NULL && key != NULL){
+        printf("Plaintext:\n%s\n", plain_text);
+        printf("key:\n%s\n", key);
+        printf("Size of plaintext: %ld\nSize of key: %ld\n", strlen(plain_text), strlen(key));
+    }
+}
+
 /*
     All errors after startup must only be printed to stderr - but the program must still run
 */
@@ -189,8 +212,11 @@ int main(int argc, char** argv){
             }
 
             printf("SERVER: Finished recv\n");
-            printf("Contents of payload:\n%s\n", payload);
+            payload[strlen(payload)-2] = '\0';
+           // printf("Contents of payload:\n%s\n", payload);
             printf("Size of Payload = %ld\n", strlen(payload));
+            encode_message(payload);
+
             free(payload);
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
