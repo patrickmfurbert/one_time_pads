@@ -33,6 +33,7 @@ close()
 
 //defines
 #define POOL_SIZE 5
+#define RECV_BUFFER_SIZE 8192 //(2^13)
 pid_t pids[POOL_SIZE];
 int pid_process_counter = 0;
 
@@ -57,8 +58,6 @@ void store_pid(pid_t pid){
     pids[pid_process_counter++] = pid;
 }
 
-
-
 /*
     All errors after startup must only be printed to stderr - but the program must still run
 */
@@ -70,7 +69,7 @@ int main(int argc, char** argv){
     pid_t parent_pid = getpid();
     pid_t pid;
 
-    char buffer[256];
+    char buffer[RECV_BUFFER_SIZE];
     struct sockaddr_in server_address, client_address;
     socklen_t size_of_client_info = sizeof(client_address);
 
@@ -139,7 +138,8 @@ int main(int argc, char** argv){
     }
 
     if(pid == 0){
-       // _exit(0);
+
+      // _exit(0);
       //  printf("Do we make it here?\n");
     
 
@@ -165,13 +165,17 @@ int main(int argc, char** argv){
             memset(buffer, '\0', sizeof(buffer));
 
         ////////////RECV///////////////////////
-            characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
-            if(characters_read < 0){
-                fprintf(stderr, "ERROR on reading from the socket");
-                exit(1);
+            while(strstr(buffer, "!!") == NULL) {
+                memset(buffer, '\0', sizeof(buffer));
+                characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
+                if(characters_read < 0){
+                    fprintf(stderr, "ERROR on reading from the socket");
+                    exit(1);
+                }
+                printf("SERVER: I received this from the client: \"%s\"\n", buffer);
             }
-            printf("SERVER: I received this from the client: \"%s\"\n", buffer);
 
+            printf("SERVER: Finished recv\n");
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
                                     "I am the server, and I got your message", 39, 0);
