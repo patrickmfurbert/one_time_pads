@@ -163,12 +163,12 @@ int main(int argc, char** argv){
     //concatenate the plaintext and the keyfile
     char payload[strlen(plain_text_arr) + strlen(key_arr) + 5];
     memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 5);
-    //printf("%s\n", payload);
 
     strcat(payload, plain_text_arr);
     strcat(payload, "@@");
     strcat(payload, key_arr);
     strcat(payload, "!!");
+    //printf("%s\n", payload);
 
     
 

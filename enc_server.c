@@ -133,7 +133,7 @@ int main(int argc, char** argv){
     pid_t parent_pid = getpid();
     pid_t pid;
 
-    char buffer[RECV_BUFFER_SIZE];
+    char buffer[RECV_BUFFER_SIZE+1];
     char* payload = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
     memset(payload, '\0', RECV_BUFFER_SIZE + 1);
     int need_to_realloc = 0;
@@ -169,7 +169,7 @@ int main(int argc, char** argv){
     ////////////LISTEN/////////////////////
     listen(listen_socket, 10);
 
-    //printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
+    printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
 
 
     ////////////SPAWN WORKERS//////////////
@@ -236,11 +236,11 @@ int main(int argc, char** argv){
             
 
             //clear the buffer
-            memset(buffer, '\0', RECV_BUFFER_SIZE);
+            memset(buffer, '\0', RECV_BUFFER_SIZE+1);
 
         ////////////RECV///////////////////////
             while(strstr(buffer, "!!") == NULL) {
-                memset(buffer, '\0', RECV_BUFFER_SIZE); //clear the buffer
+                memset(buffer, '\0', RECV_BUFFER_SIZE+1); //clear the buffer
                 characters_read = recv(connection_socket, buffer, RECV_BUFFER_SIZE, 0);
                 if(characters_read < 0){
                     fprintf(stderr, "ERROR on reading from the socket");
@@ -252,9 +252,12 @@ int main(int argc, char** argv){
                 if(!need_to_realloc){
                     need_to_realloc = 1;
                     strcat(payload, buffer);
+                    //printf("SERVER: Payload so far: \"%s\"\n", payload);
                 }else{
                     payload = (char*)realloc(payload, sizeof(char)*(RECV_BUFFER_SIZE + payload_size));
                     strcat(payload, buffer);
+                    //printf("SERVER: Payload so far: \"%s\"\n", payload);
+
                     payload_size += RECV_BUFFER_SIZE;
                 }
             }
