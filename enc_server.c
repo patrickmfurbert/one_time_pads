@@ -82,7 +82,7 @@ int mod(int a, int b){
 
 char* encode_message(char* plain_text, char* key){
 
-    char* ciphertext = (char*)malloc(2 + (sizeof(char) * strlen(plain_text)));
+    char* ciphertext = (char*)malloc((sizeof(char) * (strlen(plain_text) + 3)));
     memset(ciphertext, '\0', strlen(plain_text)+1);
     for(int i=0;i<strlen(plain_text); i++){
         ciphertext[i] = char_table[mod(get_char_position(plain_text[i]) + get_char_position(key[i]), 27)];
@@ -167,7 +167,7 @@ int main(int argc, char** argv){
     /*        End Startup                */
 
     ////////////LISTEN/////////////////////
-    listen(listen_socket, 5);
+    listen(listen_socket, 10);
 
     //printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
 
@@ -214,6 +214,9 @@ int main(int argc, char** argv){
     /*          LOOP                     */
         while(1){
 
+            char* payload = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
+            memset(payload, '\0', RECV_BUFFER_SIZE + 1);
+
 
         ////////////ACCEPT/////////////////////
             connection_socket = accept(listen_socket,
@@ -224,21 +227,21 @@ int main(int argc, char** argv){
                 exit(1);
             }
 
-            /*
-
-            printf("SERVER(PID:%d): Connected to client running at host %d port %d\n",getpid(),
-                                    ntohs(client_address.sin_addr.s_addr),
-                                    ntohs(client_address.sin_port));
             
-            */
+
+            // printf("SERVER(PID:%d): Connected to client running at host %d port %d\n",getpid(),
+            //                         ntohs(client_address.sin_addr.s_addr),
+            //                         ntohs(client_address.sin_port));
+            
+            
 
             //clear the buffer
-            memset(buffer, '\0', sizeof(buffer));
+            memset(buffer, '\0', RECV_BUFFER_SIZE);
 
         ////////////RECV///////////////////////
             while(strstr(buffer, "!!") == NULL) {
-                memset(buffer, '\0', sizeof(buffer)); //clear the buffer
-                characters_read = recv(connection_socket, buffer, sizeof(buffer), 0);
+                memset(buffer, '\0', RECV_BUFFER_SIZE); //clear the buffer
+                characters_read = recv(connection_socket, buffer, RECV_BUFFER_SIZE, 0);
                 if(characters_read < 0){
                     fprintf(stderr, "ERROR on reading from the socket");
                     exit(1);
@@ -262,7 +265,6 @@ int main(int argc, char** argv){
            // printf("Size of Payload = %ld\n", strlen(payload));
             char* cipher_text = parse_message(payload);
 
-            free(payload);
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
                                     cipher_text, strlen(cipher_text), 0);
@@ -271,9 +273,12 @@ int main(int argc, char** argv){
                 fprintf(stderr, "ERROR on writing to socket");
                 exit(1);
             }
+
+            free(payload);
+
         ////////////CLOSE//////////////////////
             close(connection_socket);
-        }
+        }//end loop
     }
 
     //wait for child processes to finish
