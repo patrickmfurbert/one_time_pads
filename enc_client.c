@@ -96,6 +96,11 @@ int main(int argc, char** argv){
     long size_plaintext = ftell(plaintext_file);
     long size_keyfile = ftell(key_file);
 
+    /*            If the key is shorter than the  plaintext error out                  */
+    if(size_keyfile < size_plaintext){
+        fprintf(stderr, "CLIENT: ERROR: size of <%s> must be >= size of <%s>\n", argv[2], argv[1]);
+        exit(1);
+    }
     
     //printf("Size of plaintext file is %ld\nSize of keyfile is %ld\n", size_plaintext, size_keyfile);
 
@@ -119,9 +124,21 @@ int main(int argc, char** argv){
 
     }
 
+    for(int i=0; i<size_plaintext-1;i++){
+        if((plain_text[i] < 65 && plain_text[i] != 32 ) || plain_text[i] > 90){
+            fprintf(stderr, "CLIENT: ERROR: <%s> contains BAD character(s) [%c] \n", argv[1], plain_text[i]);
+            exit(1);
+        }
+    }
+
+    for(int i=0; i<size_keyfile-1;i++){
+        if((key[i] < 65 && key[i] != 32 ) || key[i] > 90){
+            fprintf(stderr, "CLIENT: ERROR: <%s> contains BAD character(s) [%c] \n", argv[2], key[i]);
+            exit(1);
+        }
+    }
     
     //copy plaintext into char array for editing
-
     char plain_text_arr[size_plaintext];
     memset(plain_text_arr, '\0', size_plaintext);
     strcpy(plain_text_arr, plain_text);
@@ -162,7 +179,7 @@ int main(int argc, char** argv){
 
     /////////////////socket////////////////////
     if((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-        fprintf(stderr, "CLIENT: Error on opening socket");
+        fprintf(stderr, "CLIENT: Error on opening socket\n");
 
         exit(1);
     }
@@ -174,7 +191,7 @@ int main(int argc, char** argv){
 
 
     if(connect(socket_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0){
-        fprintf(stderr, "CLIENT: Error on connecting");
+        fprintf(stderr, "CLIENT: Error on connecting\n");
     }
 
 
@@ -186,11 +203,11 @@ int main(int argc, char** argv){
    // printf("Characters written from send: %d\n", characters_written);
 
     if(characters_written < 0){
-        fprintf(stderr, "CLIENT: Error on writing to socket");
+        fprintf(stderr, "CLIENT: Error on writing to socket\n");
     }
 
     if(characters_written < strlen(buffer)){
-        fprintf(stderr, "CLIENT: Warning, not all data written to socket");
+        fprintf(stderr, "CLIENT: Warning, not all data written to socket\n");
     }
 
     /////////////////recv//////////////////////
@@ -202,7 +219,7 @@ int main(int argc, char** argv){
         characters_read = recv(socket_fd, buffer, sizeof(buffer), 0); //read response from server
 
         if(characters_read < 0) {
-            fprintf(stderr, "CLIENT: Error on reading from socket");
+            fprintf(stderr, "CLIENT: Error on reading from socket\n");
         }
 
         if(!need_to_realloc){
