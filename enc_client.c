@@ -162,6 +162,8 @@ int main(int argc, char** argv){
     
     //concatenate the plaintext and the keyfile
     char payload[strlen(plain_text_arr) + strlen(key_arr) + 5];
+    memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 5);
+    //printf("%s\n", payload);
 
     strcat(payload, plain_text_arr);
     strcat(payload, "@@");
@@ -194,7 +196,6 @@ int main(int argc, char** argv){
         fprintf(stderr, "CLIENT: Error on connecting\n");
     }
 
-
     /////////////////send//////////////////////
     //characters_written = send(socket_fd, buffer, strlen(buffer), 0); //send message to server
     //characters_written = send(socket_fd, plain_text, strlen(plain_text), 0);
@@ -206,7 +207,7 @@ int main(int argc, char** argv){
         fprintf(stderr, "CLIENT: Error on writing to socket\n");
     }
 
-    if(characters_written < strlen(buffer)){
+    if(characters_written < strlen(payload)){
         fprintf(stderr, "CLIENT: Warning, not all data written to socket\n");
     }
 

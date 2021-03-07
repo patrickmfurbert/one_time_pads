@@ -75,16 +75,21 @@ int get_char_position(char letter){
     return (int)(position - converstion);
 }
 
+int mod(int a, int b){
+    int c = a % b;
+    return (c<0)?c+b:c;
+}
+
 char* encode_message(char* plain_text, char* key){
 
     char* ciphertext = (char*)malloc(2 + (sizeof(char) * strlen(plain_text)));
     memset(ciphertext, '\0', strlen(plain_text)+1);
     for(int i=0;i<strlen(plain_text); i++){
-        ciphertext[i] = char_table[(get_char_position(plain_text[i]) + get_char_position(key[i])) % 27];
+        ciphertext[i] = char_table[mod(get_char_position(plain_text[i]) + get_char_position(key[i]), 27)];
     }
 
     //printf("ciphertext:\n%s\n", ciphertext);
-    printf("length of ciphertext: %ld", strlen(ciphertext));
+    //printf("length of ciphertext: %ld", strlen(ciphertext));
 
     return strcat(ciphertext, "!!");
 }
@@ -93,6 +98,8 @@ char* parse_message(char* message){
     char* save_pointer;
     char* plain_text;
     char* key;
+
+    printf("Message: \n%s\n", message);
 
     plain_text = strtok_r(message, "@@", &save_pointer);
     key = strtok_r(NULL, "@@", &save_pointer);
@@ -128,6 +135,7 @@ int main(int argc, char** argv){
 
     char buffer[RECV_BUFFER_SIZE];
     char* payload = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
+    memset(payload, '\0', RECV_BUFFER_SIZE + 1);
     int need_to_realloc = 0;
     int payload_size = RECV_BUFFER_SIZE + 1;
     struct sockaddr_in server_address, client_address;
