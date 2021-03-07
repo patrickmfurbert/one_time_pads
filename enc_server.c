@@ -36,6 +36,7 @@ close()
 #define RECV_BUFFER_SIZE 8192 //(2^13)
 pid_t pids[POOL_SIZE];
 int pid_process_counter = 0;
+int char_table[27]; //table of values for encoded characters
 
 // Set up the address struct for the server socket
 void setupAddressStruct(struct sockaddr_in* address, 
@@ -58,7 +59,37 @@ void store_pid(pid_t pid){
     pids[pid_process_counter++] = pid;
 }
 
-void encode_message(char* message){
+void fill_table(){
+    //fill table
+    for(int i=65; i<=90; i++){
+        char_table[i-65] = i;
+    }
+
+    //put value for space in table(at the last index)
+    char_table[26] = 32;
+}
+
+int get_char_position(char letter){
+    char* converstion = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
+    char* position = strchr(converstion, letter);
+    return (int)(position - converstion);
+}
+
+char* encode_message(char* plain_text, char* key){
+
+    char* ciphertext = (char*)malloc(1 + (sizeof(char) * strlen(plain_text)));
+    memset(ciphertext, '\0', strlen(plain_text)+1);
+    for(int i=0;i<strlen(plain_text); i++){
+        ciphertext[i] = char_table[(get_char_position(plain_text[i]) + get_char_position(key[i])) % 27];
+    }
+
+    printf("ciphertext:\n%s\n", ciphertext);
+    printf("length of ciphertext: %ld", strlen(ciphertext));
+
+    return ciphertext;
+}
+
+char* parse_message(char* message){
     char* save_pointer;
     char* plain_text;
     char* key;
@@ -75,9 +106,10 @@ void encode_message(char* message){
     }
 
     if(plain_text != NULL && key != NULL){
-        printf("Plaintext:\n%s\n", plain_text);
-        printf("key:\n%s\n", key);
-        printf("Size of plaintext: %ld\nSize of key: %ld\n", strlen(plain_text), strlen(key));
+       // printf("Plaintext:\n%s\n", plain_text);
+       // printf("key:\n%s\n", key);
+       // printf("Size of plaintext: %ld\nSize of key: %ld\n", strlen(plain_text), strlen(key));
+        return encode_message(plain_text, key);
     }
 }
 
@@ -87,6 +119,8 @@ void encode_message(char* message){
 
 int main(int argc, char** argv){
     
+    fill_table();
+
     int connection_socket, characters_read, listen_socket, worker_number = 0;
     pid_t list_of_workers[POOL_SIZE];
     pid_t parent_pid = getpid();
@@ -214,13 +248,13 @@ int main(int argc, char** argv){
             printf("SERVER: Finished recv\n");
             payload[strlen(payload)-2] = '\0';
            // printf("Contents of payload:\n%s\n", payload);
-            printf("Size of Payload = %ld\n", strlen(payload));
-            encode_message(payload);
+           // printf("Size of Payload = %ld\n", strlen(payload));
+            char* cipher_text = parse_message(payload);
 
             free(payload);
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
-                                    "I am the server, and I got your message", 39, 0);
+                                    cipher_text, strlen(cipher_text), 0);
             if(characters_read < 0){
                 fprintf(stderr, "ERROR on writing to socket");
                 exit(1);

@@ -28,6 +28,10 @@ close()
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+
+#define RECV_BUFFER_SIZE 8192 //(2^13)
+
+
 // Set up the address struct for the server socket
 void setupAddressStruct(struct sockaddr_in* address, 
                         int portNumber){
@@ -52,7 +56,7 @@ int main(int argc, char** argv){
 
     int socket_fd, port_number, characters_written, characters_read;
     struct sockaddr_in server_address;
-    char buffer[256] = "Hi there! I am the baddest encryption client ever";
+    char buffer[RECV_BUFFER_SIZE] = "Hi there! I am the baddest encryption client ever";
     
 
     /*        Begin Startup             */
@@ -191,7 +195,7 @@ int main(int argc, char** argv){
     /////////////////recv//////////////////////
     memset(buffer, '\0', sizeof(buffer)); // clear the buffer
 
-    characters_read = recv(socket_fd, buffer, sizeof(buffer) -1, 0); //read response from server
+    characters_read = recv(socket_fd, buffer, sizeof(buffer), 0); //read response from server
 
     if(characters_read < 0) {
         fprintf(stderr, "CLIENT: Error on reading from socket");
