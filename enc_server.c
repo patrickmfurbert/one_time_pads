@@ -77,16 +77,16 @@ int get_char_position(char letter){
 
 char* encode_message(char* plain_text, char* key){
 
-    char* ciphertext = (char*)malloc(1 + (sizeof(char) * strlen(plain_text)));
+    char* ciphertext = (char*)malloc(2 + (sizeof(char) * strlen(plain_text)));
     memset(ciphertext, '\0', strlen(plain_text)+1);
     for(int i=0;i<strlen(plain_text); i++){
         ciphertext[i] = char_table[(get_char_position(plain_text[i]) + get_char_position(key[i])) % 27];
     }
 
-    printf("ciphertext:\n%s\n", ciphertext);
+    //printf("ciphertext:\n%s\n", ciphertext);
     printf("length of ciphertext: %ld", strlen(ciphertext));
 
-    return ciphertext;
+    return strcat(ciphertext, "!!");
 }
 
 char* parse_message(char* message){
@@ -255,6 +255,7 @@ int main(int argc, char** argv){
             ////////////SEND///////////////////////
             characters_read = send(connection_socket, 
                                     cipher_text, strlen(cipher_text), 0);
+            free(cipher_text);
             if(characters_read < 0){
                 fprintf(stderr, "ERROR on writing to socket");
                 exit(1);

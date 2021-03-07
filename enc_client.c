@@ -57,8 +57,9 @@ int main(int argc, char** argv){
     int socket_fd, port_number, characters_written, characters_read;
     struct sockaddr_in server_address;
     char buffer[RECV_BUFFER_SIZE] = "Hi there! I am the baddest encryption client ever";
-    
-
+    char* cipher_text = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
+    int need_to_realloc = 0;
+    int cipher_text_size = RECV_BUFFER_SIZE + 1;
     /*        Begin Startup             */
     if (argc<4){
         fprintf(stderr,"USAGE: %s plaintext_file key_file port\n", argv[0]); 
@@ -96,7 +97,7 @@ int main(int argc, char** argv){
     long size_keyfile = ftell(key_file);
 
     
-    printf("Size of plaintext file is %ld\nSize of keyfile is %ld\n", size_plaintext, size_keyfile);
+    //printf("Size of plaintext file is %ld\nSize of keyfile is %ld\n", size_plaintext, size_keyfile);
 
     fseek(plaintext_file, 0, SEEK_SET); //set the file position to the beginning
     fseek(key_file, 0, SEEK_SET);
@@ -169,7 +170,7 @@ int main(int argc, char** argv){
     /*        End Startup               */
 
     /////////////////connect///////////////////
-    printf("Client started with plaintext file: %s & key_file: %s\n", argv[1], argv[2]);
+    //printf("Client started with plaintext file: %s & key_file: %s\n", argv[1], argv[2]);
 
 
     if(connect(socket_fd, (struct sockaddr*)&server_address, sizeof(server_address)) < 0){
@@ -182,7 +183,7 @@ int main(int argc, char** argv){
     //characters_written = send(socket_fd, plain_text, strlen(plain_text), 0);
     characters_written = send(socket_fd, payload, strlen(payload), 0);
 
-    printf("Characters written from send: %d\n", characters_written);
+   // printf("Characters written from send: %d\n", characters_written);
 
     if(characters_written < 0){
         fprintf(stderr, "CLIENT: Error on writing to socket");
@@ -195,14 +196,30 @@ int main(int argc, char** argv){
     /////////////////recv//////////////////////
     memset(buffer, '\0', sizeof(buffer)); // clear the buffer
 
-    characters_read = recv(socket_fd, buffer, sizeof(buffer), 0); //read response from server
+    while(strstr(buffer, "!!") == NULL){
+        memset(buffer, '\0', sizeof(buffer)); //clear the buffer
 
-    if(characters_read < 0) {
-        fprintf(stderr, "CLIENT: Error on reading from socket");
+        characters_read = recv(socket_fd, buffer, sizeof(buffer), 0); //read response from server
+
+        if(characters_read < 0) {
+            fprintf(stderr, "CLIENT: Error on reading from socket");
+        }
+
+        if(!need_to_realloc){
+            need_to_realloc = 1;
+            strcat(cipher_text, buffer);
+        }else{
+            cipher_text = (char*)realloc(cipher_text, sizeof(char)*(RECV_BUFFER_SIZE + cipher_text_size));
+            strcat(cipher_text, buffer);
+            cipher_text_size += RECV_BUFFER_SIZE;
+        }
     }
 
-    fprintf(stdout, "CLIENT: I recieved this message from the server: \"%s\"\n", buffer);
+    cipher_text[strlen(cipher_text)-2] = '\0';
+    //fprintf(stdout, "CLIENT: I recieved this message from the server: \"%s\"\n", buffer);
+    fprintf(stdout, "%s\n", cipher_text);
 
+    free(cipher_text);
     /////////////////close/////////////////////
     close(socket_fd);
 
