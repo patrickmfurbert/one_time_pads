@@ -169,7 +169,7 @@ int main(int argc, char** argv){
     ////////////LISTEN/////////////////////
     listen(listen_socket, 10);
 
-    printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
+   // printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
 
 
     ////////////SPAWN WORKERS//////////////
@@ -254,13 +254,25 @@ int main(int argc, char** argv){
                     strcat(payload, buffer);
                     //printf("SERVER: Payload so far: \"%s\"\n", payload);
                 }else{
+
+                    // const size_t a = sizeof(payload);
+                    // const size_t b = sizeof(buffer);
+                    // const size_t size_ab = a + b + 1;
+
+                    // payload = (char*)realloc(payload, size_ab);
+                    // memcpy(payload+a, buffer, b+1);
+
+
                     payload = (char*)realloc(payload, sizeof(char)*(RECV_BUFFER_SIZE + payload_size));
                     strcat(payload, buffer);
-                    //printf("SERVER: Payload so far: \"%s\"\n", payload);
 
+                    //printf("size of payload: %ld size of buffer %ld\n", strlen(payload), strlen(buffer));
+                   // printf("SERVER: Payload so far: \"%s\"\n", payload);
                     payload_size += RECV_BUFFER_SIZE;
                 }
             }
+            //printf("%s\n", payload);
+
 
            // printf("SERVER: Finished recv\n");
             payload[strlen(payload)-2] = '\0';

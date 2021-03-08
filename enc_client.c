@@ -56,7 +56,7 @@ int main(int argc, char** argv){
 
     int socket_fd, port_number, characters_written, characters_read;
     struct sockaddr_in server_address;
-    char buffer[RECV_BUFFER_SIZE] = "Hi there! I am the baddest encryption client ever";
+    char buffer[RECV_BUFFER_SIZE+1] = "Hi there! I am the baddest encryption client ever";
     char* cipher_text = (char*)malloc(sizeof(char)*(RECV_BUFFER_SIZE + 1));
     int need_to_realloc = 0;
     int cipher_text_size = RECV_BUFFER_SIZE + 1;
@@ -212,12 +212,12 @@ int main(int argc, char** argv){
     }
 
     /////////////////recv//////////////////////
-    memset(buffer, '\0', sizeof(buffer)); // clear the buffer
+    memset(buffer, '\0', RECV_BUFFER_SIZE+1); // clear the buffer
 
     while(strstr(buffer, "!!") == NULL){
-        memset(buffer, '\0', sizeof(buffer)); //clear the buffer
+        memset(buffer, '\0', RECV_BUFFER_SIZE+1); //clear the buffer
 
-        characters_read = recv(socket_fd, buffer, sizeof(buffer), 0); //read response from server
+        characters_read = recv(socket_fd, buffer, RECV_BUFFER_SIZE, 0); //read response from server
 
         if(characters_read < 0) {
             fprintf(stderr, "CLIENT: Error on reading from socket\n");
