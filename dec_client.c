@@ -161,9 +161,10 @@ int main(int argc, char** argv){
 
     
     //concatenate the plaintext and the keyfile
-    char payload[strlen(plain_text_arr) + strlen(key_arr) + 5];
-    memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 5);
+    char payload[strlen(plain_text_arr) + strlen(key_arr) + 9];
+    memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 9);
 
+    strcat(payload, "dec:");
     strcat(payload, plain_text_arr);
     strcat(payload, "@@");
     strcat(payload, key_arr);
@@ -218,7 +219,10 @@ int main(int argc, char** argv){
         memset(buffer, '\0', RECV_BUFFER_SIZE+1); //clear the buffer
 
         characters_read = recv(socket_fd, buffer, RECV_BUFFER_SIZE, 0); //read response from server
-
+        if(strstr(buffer, "^^") != NULL){
+            fprintf(stderr, "CLIENT: Connection rejected - wrong server\n");
+            exit(1);
+        }
         if(characters_read < 0) {
             fprintf(stderr, "CLIENT: Error on reading from socket\n");
         }

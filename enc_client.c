@@ -161,9 +161,10 @@ int main(int argc, char** argv){
 
     
     //concatenate the plaintext and the keyfile
-    char payload[strlen(plain_text_arr) + strlen(key_arr) + 5];
-    memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 5);
+    char payload[strlen(plain_text_arr) + strlen(key_arr) + 9];
+    memset(payload, '\0', strlen(plain_text_arr) + strlen(key_arr) + 9);
 
+    strcat(payload, "enc:");
     strcat(payload, plain_text_arr);
     strcat(payload, "@@");
     strcat(payload, key_arr);

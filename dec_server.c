@@ -242,6 +242,10 @@ int main(int argc, char** argv){
             while(strstr(buffer, "!!") == NULL) {
                 memset(buffer, '\0', RECV_BUFFER_SIZE+1); //clear the buffer
                 characters_read = recv(connection_socket, buffer, RECV_BUFFER_SIZE, 0);
+                if(strstr(buffer, "enc:") != NULL){
+                    characters_read = send(connection_socket, "^^", 2, 0);
+                    close(connection_socket);
+                }                
                 if(characters_read < 0){
                     fprintf(stderr, "ERROR on reading from the socket");
                     exit(1);
@@ -276,6 +280,8 @@ int main(int argc, char** argv){
 
            // printf("SERVER: Finished recv\n");
             payload[strlen(payload)-2] = '\0';
+            char* payload_reference = payload;
+            payload = payload + 4;
            // printf("Contents of payload:\n%s\n", payload);
            // printf("Size of Payload = %ld\n", strlen(payload));
             char* cipher_text = parse_message(payload);
@@ -289,7 +295,7 @@ int main(int argc, char** argv){
                 exit(1);
             }
 
-            free(payload);
+            free(payload_reference);
 
         ////////////CLOSE//////////////////////
             close(connection_socket);
