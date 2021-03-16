@@ -20,5 +20,5 @@ communication APIs. The keygen generates a key that must be atleast as long as t
 ./compileall.sh
 
 #### Run test script:
-./p5testscript random_port_1 random_port_2 > mytestresults 2>&1
+./p5testscript random_port_1 random_port_2 > mytestresults 2>&1 <br/>
 ie: ./p5testscript 57162 57163 > mytestresults 2>&1
