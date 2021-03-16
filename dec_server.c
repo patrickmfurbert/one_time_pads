@@ -10,6 +10,7 @@
 */
 
 /*
+****order of network api calls****
 socket()
 bind()
 listen()
@@ -55,10 +56,12 @@ void setupAddressStruct(struct sockaddr_in* address,
 
 }
 
+//store pid of child processes
 void store_pid(pid_t pid){
     pids[pid_process_counter++] = pid;
 }
 
+//fill translation table for working with plaintext and keyfile
 void fill_table(){
     //fill table
     for(int i=65; i<=90; i++){
@@ -69,38 +72,40 @@ void fill_table(){
     char_table[26] = 32;
 }
 
+//get the position of character in the conversion string
 int get_char_position(char letter){
     char* converstion = "ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
     char* position = strchr(converstion, letter);
     return (int)(position - converstion);
 }
 
+//mod function that handles negative remainders
 int mod(int a, int b){
     int c = a % b;
     return (c<0)?c+b:c;
 }
 
+//encode the message with the key
 char* encode_message(char* plain_text, char* key){
 
     char* ciphertext = (char*)malloc((sizeof(char) * (strlen(plain_text) + 3)));
     memset(ciphertext, '\0', strlen(plain_text)+1);
+
+    //modular subtraction (decoding)
     for(int i=0;i<strlen(plain_text); i++){
         ciphertext[i] = char_table[mod(get_char_position(plain_text[i]) - get_char_position(key[i]), 27)];
     }
 
-    //printf("ciphertext:\n%s\n", ciphertext);
-    //printf("length of ciphertext: %ld", strlen(ciphertext));
-
     return strcat(ciphertext, "!!");
 }
 
+//parse the plaintext and the key from the message
 char* parse_message(char* message){
     char* save_pointer;
     char* plain_text;
     char* key;
 
-    //printf("Message: \n%s\n", message);
-
+    //parse plain_text and key from message recieved
     plain_text = strtok_r(message, "@@", &save_pointer);
     key = strtok_r(NULL, "@@", &save_pointer);
 
@@ -113,9 +118,6 @@ char* parse_message(char* message){
     }
 
     if(plain_text != NULL && key != NULL){
-       // printf("Plaintext:\n%s\n", plain_text);
-       // printf("key:\n%s\n", key);
-       // printf("Size of plaintext: %ld\nSize of key: %ld\n", strlen(plain_text), strlen(key));
         return encode_message(plain_text, key);
     }
 }
@@ -126,7 +128,7 @@ char* parse_message(char* message){
 
 int main(int argc, char** argv){
     
-    fill_table();
+    fill_table(); //fill up the conversion table
 
     int connection_socket, characters_read, listen_socket, worker_number = 0;
     pid_t list_of_workers[POOL_SIZE];
@@ -169,9 +171,6 @@ int main(int argc, char** argv){
     ////////////LISTEN/////////////////////
     listen(listen_socket, 10);
 
-   // printf("Server started running on http://localhost:%d\n", atoi(argv[1]));
-
-
     ////////////SPAWN WORKERS//////////////
     for(int i=0;i<POOL_SIZE;i++){
 
@@ -183,8 +182,9 @@ int main(int argc, char** argv){
 
         //fork
         pid = fork();
-        store_pid(pid);
+        store_pid(pid); //store pid of child processes
         if(pid == 0){
+            //send pid from the child to the parent through pipe
             close(pipeFDs[0]); 
             char my_pid[50];
             memset(my_pid, '\0', sizeof(my_pid));
@@ -195,22 +195,17 @@ int main(int argc, char** argv){
         if(pid == -1){
             fprintf(stderr, "SERVER: Error on forking\n");
         }
-        // Parent process will read from the pipe, so close the output file desriptor.
-       // printf("in parent block\n");
+        // Parent process will read from the pipe
         close(pipeFDs[1]);
         char read_buffer[50];
         memset(read_buffer, '\0', sizeof(read_buffer));
         r = read(pipeFDs[0], read_buffer, sizeof(read_buffer) - 1);
-       list_of_workers[i] = atoi(read_buffer);
+        list_of_workers[i] = atoi(read_buffer);
 
     }
 
-    if(pid == 0){
-
-      // _exit(0);
-      //  printf("Do we make it here?\n");
+    if(pid == 0){ //code for children(workers)
     
-
     /*          LOOP                     */
         while(1){
 
@@ -227,14 +222,7 @@ int main(int argc, char** argv){
                 exit(1);
             }
 
-            
-
-            // printf("SERVER(PID:%d): Connected to client running at host %d port %d\n",getpid(),
-            //                         ntohs(client_address.sin_addr.s_addr),
-            //                         ntohs(client_address.sin_port));
-            
-            
-
+         
             //clear the buffer
             memset(buffer, '\0', RECV_BUFFER_SIZE+1);
 
@@ -250,40 +238,22 @@ int main(int argc, char** argv){
                     fprintf(stderr, "ERROR on reading from the socket");
                     exit(1);
                 }
-               // printf("SERVER: I received this from the client: \"%s\"\n", buffer);
 
                 //build the payload 
-                if(!need_to_realloc){
+                if(!need_to_realloc){ //if this is the first message chunk we don't need to call realloc
                     need_to_realloc = 1;
                     strcat(payload, buffer);
-                    //printf("SERVER: Payload so far: \"%s\"\n", payload);
                 }else{
-
-                    // const size_t a = sizeof(payload);
-                    // const size_t b = sizeof(buffer);
-                    // const size_t size_ab = a + b + 1;
-
-                    // payload = (char*)realloc(payload, size_ab);
-                    // memcpy(payload+a, buffer, b+1);
-
-
                     payload = (char*)realloc(payload, sizeof(char)*(RECV_BUFFER_SIZE + payload_size));
                     strcat(payload, buffer);
-
-                   // printf("size of payload: %ld size of buffer %ld\n", strlen(payload), strlen(buffer));
-                   // printf("SERVER: Payload so far: \"%s\"\n", payload);
                     payload_size += RECV_BUFFER_SIZE;
                 }
             }
-            //printf("%s\n", payload);
 
 
-           // printf("SERVER: Finished recv\n");
-            payload[strlen(payload)-2] = '\0';
+            payload[strlen(payload)-2] = '\0'; //remove the "!!"(end flag) from the message
             char* payload_reference = payload;
-            payload = payload + 4;
-           // printf("Contents of payload:\n%s\n", payload);
-           // printf("Size of Payload = %ld\n", strlen(payload));
+            payload = payload + 4; //move the pointer 4 characters to ahead to remove message prefix identifying where the message originated
             char* cipher_text = parse_message(payload);
 
             ////////////SEND///////////////////////
